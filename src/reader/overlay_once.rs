@@ -9,13 +9,13 @@ use super::AsyncDataRead;
 use crate::buf::DataReadBuf;
 
 #[derive(Debug, Clone, Copy)]
-pub struct OverlayOnce<T: Clone, C: Borrow<[T]>> {
+pub struct OverlayOnce<T, C: Borrow<[T]>> {
     pos: usize,
     data: C,
     _p: PhantomData<T>,
 }
 
-impl<T: Clone, C: Borrow<[T]>> OverlayOnce<T, C> {
+impl<T, C: Borrow<[T]>> OverlayOnce<T, C> {
     pub fn new(pos: usize, data: C) -> Self {
         Self {
             pos,
@@ -25,7 +25,7 @@ impl<T: Clone, C: Borrow<[T]>> OverlayOnce<T, C> {
     }
 }
 
-impl<T: Clone, C: Borrow<[T]>> AsyncDataRead for OverlayOnce<T, C> {
+impl<T, C: Borrow<[T]>> AsyncDataRead for OverlayOnce<T, C> {
     type Item = T;
     type Err = ();
 

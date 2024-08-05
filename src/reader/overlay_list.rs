@@ -11,12 +11,12 @@ use crate::buf::DataReadBuf;
 use super::{overlay_once::OverlayOnce, AsyncDataRead};
 
 #[derive(Debug, Clone)]
-pub struct OverlayList<T: Clone, C: Borrow<[T]>> {
+pub struct OverlayList<T, C: Borrow<[T]>> {
     list: Vec<OverlayOnce<T, C>>,
     _p: PhantomData<T>,
 }
 
-impl<T: Clone, C: Borrow<[T]>> OverlayList<T, C> {
+impl<T, C: Borrow<[T]>> OverlayList<T, C> {
     pub fn new() -> Self {
         Self {
             list: vec![],
@@ -34,7 +34,7 @@ impl<T: Clone, C: Borrow<[T]>> OverlayList<T, C> {
 }
 
 // NOTE: We can make this work without [`Unpin`] by never allow `self.list` to be moved out, but I not 100% sure it's true or not :)
-impl<T: Clone + Unpin, C: Borrow<[T]> + Unpin> AsyncDataRead for OverlayList<T, C> {
+impl<T: Unpin, C: Borrow<[T]> + Unpin> AsyncDataRead for OverlayList<T, C> {
     type Item = T;
     type Err = ();
 
