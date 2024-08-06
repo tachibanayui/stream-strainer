@@ -44,6 +44,7 @@ pub trait AsyncDataRead {
     type Item;
     type Err;
 
+    // Return type Some(x) = next available position at x, None = no available position
     fn poll_read(
         self: Pin<&mut Self>,
         cx: &mut Context<'_>,
@@ -126,6 +127,21 @@ pub trait AsyncDataRead {
     {
         let len = end - start;
         self.shift_left(start).limit(len)
+    }
+}
+
+impl<S: AsyncDataRead> AsyncDataRead for Pin<&mut S> {
+    type Item = S::Item;
+    type Err = S::Err;
+
+    fn poll_read(
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+        buf: &mut impl DataReadBuf<Item = Self::Item>,
+        pos: usize,
+    ) -> Poll<Result<Option<usize>, Self::Err>> {
+        let pin_deref = Pin::as_deref_mut(self);
+        S::poll_read(pin_deref, cx, buf, pos)
     }
 }
 
