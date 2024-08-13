@@ -1,7 +1,10 @@
-use std::{future::Future, task::ready, time::Duration};
+use std::{future::Future, io::SeekFrom, pin::Pin, task::ready, time::Duration};
 
 use pin_project::pin_project;
-use tokio::time::{self, Instant, Sleep};
+use tokio::{
+    io::AsyncSeek,
+    time::{self, Instant},
+};
 
 use super::AsyncDataRead;
 
@@ -13,6 +16,7 @@ pub struct DelayReader<R> {
     delay: time::Sleep,
     #[pin]
     reader: R,
+    seek_op: Option<SeekFrom>,
 }
 
 impl<R> DelayReader<R> {
@@ -20,7 +24,8 @@ impl<R> DelayReader<R> {
         Self {
             duration,
             reader,
-            delay: tokio::time::sleep(duration),
+            delay: time::sleep(duration),
+            seek_op: None,
         }
     }
 }
@@ -36,11 +41,26 @@ where
         self: std::pin::Pin<&mut Self>,
         cx: &mut std::task::Context<'_>,
         buf: &mut impl crate::buf::DataReadBuf<Item = Self::Item>,
-        pos: usize,
-    ) -> std::task::Poll<Result<Option<usize>, Self::Err>> {
+    ) -> std::task::Poll<Result<Option<u64>, Self::Err>> {
         let mut this = self.project();
         ready!(this.delay.as_mut().poll(cx));
         this.delay.reset(Instant::now() + *this.duration);
-        this.reader.poll_read(cx, buf, pos)
+        this.reader.poll_read(cx, buf)
+    }
+}
+
+impl<R: AsyncSeek> AsyncSeek for DelayReader<R> {
+    fn start_seek(self: Pin<&mut Self>, position: std::io::SeekFrom) -> std::io::Result<()> {
+        let this = self.project();
+        *this.seek_op = Some(position);
+        Ok(())
+    }
+
+    fn poll_complete(
+        self: std::pin::Pin<&mut Self>,
+        cx: &mut std::task::Context<'_>,
+    ) -> std::task::Poll<std::io::Result<u64>> {
+        let this = self.project();
+        this.reader.poll_complete(cx)
     }
 }

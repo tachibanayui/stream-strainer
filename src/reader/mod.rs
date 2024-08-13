@@ -53,8 +53,7 @@ pub trait AsyncDataRead {
         self: Pin<&mut Self>,
         cx: &mut Context<'_>,
         buf: &mut impl DataReadBuf<Item = Self::Item>,
-        pos: usize,
-    ) -> Poll<Result<Option<usize>, Self::Err>>;
+    ) -> Poll<Result<Option<u64>, Self::Err>>;
 
     fn read_single_pass<'b, B: DataReadBuf<Item = Self::Item>>(
         &mut self,

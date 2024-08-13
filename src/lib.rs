@@ -3,12 +3,15 @@
 #![feature(associated_type_defaults)]
 #![feature(impl_trait_in_assoc_type)]
 
+use std::io::{self, ErrorKind, SeekFrom};
+
 use buf::DataReadBuf;
 
 pub mod buf;
 pub mod or;
 
 pub mod reader;
+pub mod utils;
 
 fn a<'a, T: 'a>(x: &impl DataReadBuf<Item = u8>) {
     let rx = x as &dyn DataReadBuf<Item = u8>;
