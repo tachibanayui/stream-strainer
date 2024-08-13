@@ -10,8 +10,8 @@ use crate::buf::DataReadBuf;
 
 #[derive(Debug, Clone, Copy)]
 pub struct OverlayOnce<T, C: Borrow<[T]>> {
-    pos: usize,
-    data: C,
+    pub pos: usize,
+    pub data: C,
     _p: PhantomData<T>,
 }
 

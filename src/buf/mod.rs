@@ -13,7 +13,9 @@ pub trait DataReadBuf {
     fn shrink(&mut self, count: usize);
     fn capacity(&self) -> usize;
     fn filled_mut(&mut self) -> &mut [Self::Item];
-    fn take(&mut self, n: usize) -> impl DataReadBuf<Item = Self::Item> + '_;
+    fn take(&mut self, n: usize) -> impl DataReadBuf<Item = Self::Item> + '_
+    where
+        Self: Sized;
 
     // Same req as tokio ReadBuf
     fn put_slice(&mut self, data: &[Self::Item]);

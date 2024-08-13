@@ -1,3 +1,4 @@
+pub mod delay;
 pub mod limit;
 pub mod overlay;
 pub mod overlay_list;
@@ -5,13 +6,16 @@ pub mod overlay_once;
 pub mod shift;
 
 use std::{
-    future::Future,
+    future::{poll_fn, Future, PollFn},
     mem,
+    ops::DerefMut,
     pin::Pin,
     task::{Context, Poll},
+    time::Duration,
 };
 
 use crate::buf::DataReadBuf;
+use delay::DelayReader;
 use limit::Limit;
 use overlay::OverlaySource;
 use overlay_once::OverlayOnce;
@@ -128,9 +132,19 @@ pub trait AsyncDataRead {
         let len = end - start;
         self.shift_left(start).limit(len)
     }
+
+    fn delay(self, delay: Duration) -> DelayReader<Self>
+    where
+        Self: Sized,
+    {
+        DelayReader::new(self, delay)
+    }
 }
 
-impl<S: AsyncDataRead> AsyncDataRead for Pin<&mut S> {
+impl<S: AsyncDataRead, Ptr> AsyncDataRead for Pin<Ptr>
+where
+    Ptr: DerefMut<Target = S>,
+{
     type Item = S::Item;
     type Err = S::Err;
 
